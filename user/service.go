@@ -11,9 +11,9 @@ import (
 )
 
 type Service interface {
-	ListUsers(res http.ResponseWriter, req *http.Request)
-	GetDetailsByID(res http.ResponseWriter, req *http.Request)
-	HandleNewUSer(res http.ResponseWriter, req *http.Request)
+	ListUsers(db *sqlx.DB)
+	GetDetailsByID(db *sqlx.DB)
+	HandleNewUSer(db *sqlx.DB)
 	Hello(res http.ResponseWriter, req *http.Request)
 }
 

@@ -11,11 +11,11 @@ import (
 )
 
 type Service interface {
-	ListIssues(res http.ResponseWriter, req *http.Request)
-	ShowIssueStatus(res http.ResponseWriter, req *http.Request)
-	HandleNewIssue(res http.ResponseWriter, req *http.Request)
-	AssignCustomerCare(res http.ResponseWriter, req *http.Request)
-	UpdateIssueStatus(res http.ResponseWriter, req *http.Request)
+	ListIssues(db *sqlx.DB)
+	ShowIssueStatus(db *sqlx.DB)
+	HandleNewIssue(db *sqlx.DB)
+	AssignCustomerCare(db *sqlx.DB)
+	UpdateIssueStatus(db *sqlx.DB)
 }
 
 //HandleNewIssue Example post data (Json raw)
