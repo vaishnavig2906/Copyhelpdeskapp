@@ -11,6 +11,7 @@ import (
 
 func init_router() {
 	r := mux.NewRouter().StrictSlash(true)
+
 	db, err := InitDB()
 	if err != nil {
 		log.Fatal(err)
