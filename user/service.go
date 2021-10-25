@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/vaishnavi2906/helpdesk/db"
+	"github.com/jmoiron/sqlx"
 )
 
 type Service interface {
@@ -21,92 +21,81 @@ func Hello(res http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(res, "Hello Welcome to helpdesk")
 }
 
-func ListUsers(res http.ResponseWriter, req *http.Request) {
-	fmt.Println("Complete User Data")
-	var UserInfo User
+func ListUsers(db *sqlx.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		fmt.Println("Complete User Data")
+		var UserInfo User
 
-	db, err := db.Init_DB()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	query := `SELECT * from "user";`
-	rows, err := db.Query(query)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	for rows.Next() {
-		err := rows.Scan(&UserInfo.Id, &UserInfo.Email, &UserInfo.Usertype)
+		query := `SELECT * from "user";`
+		rows, err := db.Query(query)
 		if err != nil {
 			log.Fatal(err)
 			return
 		}
-		fmt.Println("\n", UserInfo.Id, UserInfo.Email, UserInfo.Usertype)
-	}
 
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	db.Close()
+		for rows.Next() {
+			err := rows.Scan(&UserInfo.Id, &UserInfo.Email, &UserInfo.Usertype)
+			if err != nil {
+				log.Fatal(err)
+				return
+			}
+			fmt.Println("\n", UserInfo.Id, UserInfo.Email, UserInfo.Usertype)
+		}
+
+		err = rows.Err()
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		db.Close()
+	})
 }
 
-//Handle new User syntax
+//HandleNewUser Example post data (Json raw)
 // {
 //     "id":"1",
 //     "email":"a@example.com",
 //     "type":"Customer"
 // }
-func HandleNewUSer(res http.ResponseWriter, req *http.Request) {
-	var UserDetails UserRequest
+func HandleNewUSer(db *sqlx.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		var UserDetails UserRequest
 
-	err := json.NewDecoder(req.Body).Decode(&UserDetails)
-	if err != nil {
-		return
-	}
+		err := json.NewDecoder(req.Body).Decode(&UserDetails)
+		if err != nil {
+			return
+		}
 
-	db, err := db.Init_DB()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+		ctx := req.Context()
 
-	ctx := req.Context()
+		query := `INSERT INTO public."user"(id, email, user_type) VALUES ($1,$2,$3);`
 
-	query := `INSERT INTO public."user"(id, email, user_type) VALUES ($1,$2,$3);`
+		_, err = db.ExecContext(ctx, query, UserDetails.Id, UserDetails.Email, UserDetails.Usertype)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 
-	_, err = db.ExecContext(ctx, query, UserDetails.Id, UserDetails.Email, UserDetails.Usertype)
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	fmt.Fprintf(res, "Succesfully Registered")
-	db.Close()
+		fmt.Fprintf(res, "Succesfully Registered")
+		db.Close()
+	})
 }
 
-func GetDetailsByID(res http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	id := vars["User_Id"]
+func GetDetailsByID(db *sqlx.DB) http.HandlerFunc {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		id := vars["User_Id"]
 
-	db, err := db.Init_DB()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	ctx := req.Context()
-	query := `Select * FROM "user" WHERE id=$1;`
-	var UserInfo User
+		ctx := req.Context()
+		query := `Select * FROM "user" WHERE id=$1;`
+		var UserInfo User
 
-	err = db.GetContext(ctx, &UserInfo, query, id)
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("Given the details to the user")
-	fmt.Fprintf(res, "email: %v\n", UserInfo.Email)
-	db.Close()
+		err := db.GetContext(ctx, &UserInfo, query, id)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("Given the details to the user")
+		fmt.Fprintf(res, "email: %v\n", UserInfo.Email)
+		db.Close()
+	})
 }
