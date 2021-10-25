@@ -12,11 +12,7 @@ import (
 func init_router() {
 	r := mux.NewRouter().StrictSlash(true)
 
-	db, err := InitDB()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
+	db := InitDB()
 
 	//GET requests
 	r.HandleFunc("/hello", user.Hello).Methods("GET")                                  //Welcome to the helpdesk

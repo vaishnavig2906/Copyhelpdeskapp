@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -15,10 +16,14 @@ const (
 	dbname   = "dpay_helpdesk"
 )
 
-func InitDB() (*sqlx.DB, error) {
+func InitDB() *sqlx.DB {
 	dbURL := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", user_, password, host, port, dbname)
 	db, err := sqlx.Open("postgres", dbURL)
-	return db, err
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	return db
 }
 
 func main() {
